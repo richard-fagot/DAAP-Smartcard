@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\tools\\\\**",
+                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\hardware\\\\arduino\\\\avr\\\\**"
+            ],
+            "forcedInclude": [
+                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\hardware\\\\arduino\\\\avr\\\\cores\\\\arduino\\\\Arduino.h"
+            ],
+            "intelliSenseMode": "msvc-x64"
+        }
+    ],
+    "version": 4
+}
