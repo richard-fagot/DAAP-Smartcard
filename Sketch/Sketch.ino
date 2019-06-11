@@ -197,7 +197,7 @@ void loop()
 
     case WRITE_DATA:
       setNewData();
-      STATE = REMOVE_CARD;
+      STATE = CMD;
       break;
 
     case REMOVE_CARD:
