@@ -1,11 +1,11 @@
 #include "SL44x2.h"
 
-#define SC_C2_RST              7
-#define SC_C1_VCC              11
-#define SC_C7_IO               10
+#define SC_C2_RST              A1
+#define SC_C1_VCC              A0
+#define SC_C7_IO               A2
 #define SC_C2_CLK              9
 
-#define SC_SWITCH_CARD_PRESENT 8
+#define SC_SWITCH_CARD_PRESENT 13
 
 #define SC_SWITCH_CARD_PRESENT_INVERT false
 
@@ -22,6 +22,8 @@ char ack[2]; // Utilisé pour stocker la réponse de l'utilisateur à la confirm
 
 
 enum state {
+  CMD,
+  WAIT_CMD,
   INSERT_CARD,
   WAIT_CARD,
   INIT_CARD,
@@ -39,35 +41,69 @@ enum state {
   IDLE
 };
 
-state STATE = NAME;
+state STATE = INSERT_CARD;
 state nextState;
 boolean hasFinished = false;
+
+String msg;
 
 void setup()
 {
   Serial.begin(9600);
-  while (!Serial) {} // wait for serial port to connect. Needed for Leonardo only
+  //while (!Serial) {} // wait for serial port to connect. Needed for Leonardo only
                      // https://www.arduino.cc/en/Serial/IfSerial
+
+ msg.reserve(50);
 }
+
+
 
 void loop()
 {
   switch(STATE) {
+    case CMD:
+      Serial.println(F("Menu :"));
+      Serial.println(F("1) Lire"));
+      Serial.println(F("2) Modifier"));
+      Serial.println(F("3) Quitter"));
+      STATE = WAIT_CMD;
+      hasFinished = false;
+      break;
+
+    case WAIT_CMD:
+      waitUserEntry(ack, 2);
+      if(hasFinished) {
+        switch(ack[0]) {
+        case '1':
+          STATE = INIT_CARD;
+          break;
+        case '2':
+          STATE = NAME;
+          break;
+        case '3':
+          STATE = REMOVE_CARD;
+          break;
+        default:
+          break;
+        }  
+      }
+      break;
+      
     case INSERT_CARD:
       Serial.println(F("Insérer la carte"));
-      nextState = WAIT_CARD;
+      STATE = WAIT_CARD;
       break;
 
     case WAIT_CARD:
       if(sl44x2.cardInserted()) {
-        STATE = INIT_CARD;
+        STATE = CMD;
       }
       break;
 
     case INIT_CARD:
       if(sl44x2.cardReady()) {
         displayCardContent();
-        STATE = NAME;
+        STATE = CMD;
       } else {
         Serial.println(F("Carte non reconnue."));
         STATE = REMOVE_CARD;
@@ -82,8 +118,9 @@ void loop()
     	break;
 
     case WAIT_NAME:
-    	waitUserEntry(name);
+    	waitUserEntry(name, 21);
     	if(hasFinished) {
+          delay(20);
           Serial.println(name);
           STATE = nextState;
     	}
@@ -97,8 +134,9 @@ void loop()
     	break;
 
     case WAIT_CODE:
-    	waitUserEntry(code);
+    	waitUserEntry(code, 5);
       if(hasFinished) {
+        delay(20);
         Serial.println(code);
         STATE = nextState;
     	}
@@ -112,10 +150,11 @@ void loop()
     	break;
 
     case WAIT_MONEY:
-    	waitUserEntry(amount);
-        if(hasFinished) {
-          Serial.println(amount);
-          STATE = nextState;
+    	waitUserEntry(amount, 4);
+      if(hasFinished) {
+        delay(20);
+        Serial.println(amount);
+        STATE = nextState;
     	}
     	break;
 
@@ -124,26 +163,36 @@ void loop()
     	Serial.print(F(" - Nom     : ")); Serial.println(name);
     	Serial.print(F(" - Code    : ")); Serial.println(code);
     	Serial.print(F(" - Montant : ")); Serial.println(amount);
-    	Serial.println(F("Confirmer (O/N) : "));
+    	Serial.println(F("Confirmer (O/N/A) : "));
     	STATE = WAIT_ACK;
+      hasFinished = false;
     	break;
 
     case WAIT_ACK:
-    	waitUserEntry(ack);
-    	switch(ack[0]) {
+    	waitUserEntry(ack, 2);
+      if(hasFinished) {
+        switch(ack[0]) {
         case 'O':
         case 'o':
-        	Serial.println(F("Ecriture des données dans la carte."));
+          Serial.println(F("Ecriture des données dans la carte."));
           STATE = WRITE_DATA;
-        	break;
+          delay(20);
+          break;
         case 'N':
         case 'n':
-        	STATE = NAME;
-        	break;
+          STATE = NAME;
+         //Serial.println(msg);
+          delay(20);
+          break;
+        case 'A':
+        case 'a':
+         STATE = CMD;
+         break;
         default:
-        	STATE = ACK;
-        	break;
-    	}
+          break;
+        }  
+      }
+    	
     	break;
 
     case WRITE_DATA:
@@ -168,20 +217,25 @@ void loop()
   }
 }
 
-void waitUserEntry(char *buff) {
+void waitUserEntry(char *buff, int maxSize) {
   
   while(Serial.available() <= 0){delay(10);}
   int index = 0;
   char inChar;
-  while(Serial.available() > 0) {
+  msg.concat("#");
+  while(Serial.available() > 0 && index < maxSize-1) {
     inChar = Serial.read();
+    if(inChar == '\n') {
+      msg.concat("&");
+      hasFinished = true;
+      break;
+    }
+    msg.concat(inChar);
     buff[index] = inChar;
     index++;
     buff[index] = '\0';
-    delay(10); // nécessaire pour laisser le temps au Serial de faire ses traitements
+    delay(20); // nécessaire pour laisser le temps au Serial de faire ses traitements
   }
-  
-  hasFinished = true;
 }
 
 void setNewData() {
@@ -191,8 +245,9 @@ void setNewData() {
     Serial.println(F("Authentifié ..."));
 
     // Update Main Memory (Unprotected Area 32 .. 255)
-    uint8_t infos[4+3+20 + 1];
-    strcpy(infos, code);
+    uint8_t infos[1+4+3+20 + 1];
+    infos[0] = strlen(name);
+    strcpy(infos+1, code);
     strcat(infos, amount);
     strcat(infos, name);
       

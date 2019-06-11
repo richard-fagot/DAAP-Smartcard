@@ -3,12 +3,14 @@
         {
             "name": "Win32",
             "includePath": [
-                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\tools\\\\**",
-                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\hardware\\\\arduino\\\\avr\\\\**"
+                "C:\\Users\\richa\\AppData\\Local\\Arduino15\\packages\\esp8266\\tools\\**",
+                "C:\\Users\\richa\\AppData\\Local\\Arduino15\\packages\\esp8266\\hardware\\esp8266\\2.5.2\\**",
+                "C:\\RFA\\Perso\\arduino-1.8.9-windows\\arduino-1.8.9\\tools\\**",
+                "C:\\RFA\\Perso\\arduino-1.8.9-windows\\arduino-1.8.9\\hardware\\arduino\\avr\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\**",
+                "C:\\Program Files (x86)\\Arduino\\tools\\**"
             ],
-            "forcedInclude": [
-                "C:\\\\RFA\\\\Perso\\\\arduino-1.8.9-windows\\\\arduino-1.8.9\\\\hardware\\\\arduino\\\\avr\\\\cores\\\\arduino\\\\Arduino.h"
-            ],
+            "forcedInclude": [],
             "intelliSenseMode": "msvc-x64"
         }
     ],
